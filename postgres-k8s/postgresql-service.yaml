@@ -1,0 +1,15 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2is-rdbms-service-postgres
+  namespace: wso2
+spec:
+  type: ClusterIP
+  selector:
+    deployment: wso2is-postgres
+  ports:
+    - name: postgres-port
+      port: 5432
+      targetPort: 5432
+      protocol: TCP

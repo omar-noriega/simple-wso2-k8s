@@ -1,0 +1,60 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wso2is-postgres-deployment
+  namespace: wso2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: wso2is-postgres
+      pod: wso2is
+  template:
+    metadata:
+      labels:
+        deployment: wso2is-postgres
+        pod: wso2is
+    spec:
+      containers:
+        - name: wso2is-postgres
+          image: postgres
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+            successThreshold: 1
+            timeoutSeconds: 5
+          securityContext:
+            runAsUser: 999
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: POSTGRESQL_PORT_NUMBER
+              value: "5432"
+            - name: POSTGRESQL_VOLUME_DIR
+              value: //var/lib/postgresql/data
+            - name: POSTGRES_USER
+              value: regadmin
+            - name: POSTGRES_PASSWORD
+              value: regadmin
+            - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          volumeMounts:
+            - name: postgres-dbscripts
+              mountPath: /docker-entrypoint-initdb.d
+#          args: ["--max-connections", "10000"]
+      volumes:
+        - name: postgres-dbscripts
+          configMap:
+            name: postgres-dbscripts
+      serviceAccountName: "wso2svc-account"
